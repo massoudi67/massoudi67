@@ -1,0 +1,45 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # Bypass Cloudflare JS challenge for API endpoints
+    RewriteCond %{REQUEST_URI} ^/samtraffic/api/(trial|activate|update|proxies)\.php [NC]
+    RewriteRule ^ - [E=NOJS:1]
+
+    # Prevent access to SQLite files (if any remain)
+    RewriteRule \.(sqlite|db|sqlite3)$ - [F,L]
+
+    # Prevent access to hidden files
+    RewriteRule (^\.|/\.) - [F,L]
+</IfModule>
+
+<IfModule mod_headers.c>
+    # Disable all caching for API responses
+    <FilesMatch "\.(php)$">
+        Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+        Header set Pragma "no-cache"
+        Header set Expires "0"
+    </FilesMatch>
+
+    # Disable caching for API directory
+    <DirectoryMatch "api">
+        Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+        Header set Pragma "no-cache"
+        Header set Expires "0"
+    </DirectoryMatch>
+
+    # Security headers
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "DENY"
+    Header set X-XSS-Protection "1; mode=block"
+</IfModule>
+
+<IfModule mod_mime.c>
+    AddCharset UTF-8 .php
+</IfModule>
+
+# Prevent directory listing
+Options -Indexes
+
+# Disable server signature
+ServerSignature Off
